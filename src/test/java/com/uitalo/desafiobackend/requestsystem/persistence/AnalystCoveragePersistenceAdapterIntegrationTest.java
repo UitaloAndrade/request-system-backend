@@ -30,7 +30,6 @@ class AnalystCoveragePersistenceAdapterIntegrationTest {
 
     @Test
     void shouldSaveAndFindAnalystCoverages() {
-        // Arrange
         User analyst = createAnalyst();
         userRepository.save(analyst);
 
@@ -40,13 +39,11 @@ class AnalystCoveragePersistenceAdapterIntegrationTest {
                 new AnalystCoverage(analyst.getId(), "SP")
         );
 
-        // Act
         coverageRepository.saveAll(coverages);
 
         List<AnalystCoverage> foundCoverages =
                 coverageRepository.findByAnalystId(analyst.getId());
 
-        // Assert
         assertThat(foundCoverages)
                 .hasSize(3)
                 .extracting(AnalystCoverage::state)
@@ -55,7 +52,6 @@ class AnalystCoveragePersistenceAdapterIntegrationTest {
 
     @Test
     void shouldCheckWhetherAnalystCoversState() {
-        // Arrange
         User analyst = createAnalyst();
         userRepository.save(analyst);
 
@@ -64,7 +60,6 @@ class AnalystCoveragePersistenceAdapterIntegrationTest {
                 new AnalystCoverage(analyst.getId(), "GO")
         ));
 
-        // Act / Assert
         assertThat(
                 coverageRepository.existsByAnalystIdAndState(
                         analyst.getId(), "DF"
@@ -80,7 +75,6 @@ class AnalystCoveragePersistenceAdapterIntegrationTest {
 
     @Test
     void shouldDeleteAllCoveragesForAnalyst() {
-        // Arrange
         User analyst = createAnalyst();
         userRepository.save(analyst);
 
@@ -89,10 +83,8 @@ class AnalystCoveragePersistenceAdapterIntegrationTest {
                 new AnalystCoverage(analyst.getId(), "GO")
         ));
 
-        // Act
         coverageRepository.deleteByAnalystId(analyst.getId());
 
-        // Assert
         assertThat(
                 coverageRepository.findByAnalystId(analyst.getId())
         ).isEmpty();
