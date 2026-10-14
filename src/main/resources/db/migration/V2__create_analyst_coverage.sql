@@ -8,7 +8,7 @@ CREATE TABLE analyst_coverage (
     CONSTRAINT fk_analyst_coverage_user
       FOREIGN KEY (analyst_id)
           REFERENCES users (id)
-          ON DELETE CASCADE,
+          ON DELETE CASCADE/*,
 
     CONSTRAINT ck_analyst_coverage_state
       CHECK (state IN (
@@ -18,7 +18,7 @@ CREATE TABLE analyst_coverage (
             'PR', 'PE', 'PI', 'RJ', 'RN',
             'RS', 'RO', 'RR', 'SC', 'SP',
             'SE', 'TO'
-          ))
+          ))*/
 );
 
 CREATE INDEX idx_analyst_coverage_state

@@ -13,8 +13,8 @@ CREATE TABLE users (
     CONSTRAINT uk_users_email
        UNIQUE (email),
 
-    CONSTRAINT ck_users_role
-       CHECK (role IN ('CLIENT', 'ANALYST', 'ADMIN')),
+--     CONSTRAINT ck_users_role
+--        CHECK (role IN ('CLIENT', 'ANALYST', 'ADMIN')),
 
     CONSTRAINT ck_users_email_lowercase
        CHECK (email = LOWER(email))
