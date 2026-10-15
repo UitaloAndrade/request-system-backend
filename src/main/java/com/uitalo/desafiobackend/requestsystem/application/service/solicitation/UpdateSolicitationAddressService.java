@@ -46,7 +46,7 @@ public class UpdateSolicitationAddressService
                 lookupAddressUseCase.lookup(cep);
 
         Address address = new Address(
-                postalAddress.postalCode(),
+                postalAddress.postalCode().replaceAll("\\D", ""),
                 postalAddress.street(),
                 postalAddress.city(),
                 postalAddress.neighborhood(),

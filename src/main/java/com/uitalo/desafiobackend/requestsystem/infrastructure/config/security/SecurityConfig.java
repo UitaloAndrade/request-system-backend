@@ -29,6 +29,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Autenticação e documentação
                         .requestMatchers(
                                 "/auth/register",
                                 "/auth/login",
@@ -36,8 +38,20 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+
+                        // Administração
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Operações de análise
                         .requestMatchers("/analyst/**").hasRole("ANALYST")
+
+                        // Consulta de CEP: qualquer usuário autenticado
+                        .requestMatchers("/addresses/**").authenticated()
+
+                        // Solicitações: somente clientes
+                        .requestMatchers("/solicitations/**").hasRole("CLIENT")
+
+                        // Demais endpoints exigem autenticação
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
@@ -46,11 +60,9 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_UNAUTHORIZED))
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                         .accessDeniedHandler((request, response, exception) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_FORBIDDEN))
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN))
                 );
 
         return http.build();

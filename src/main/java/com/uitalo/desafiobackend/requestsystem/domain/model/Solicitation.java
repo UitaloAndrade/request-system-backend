@@ -1,5 +1,7 @@
 package com.uitalo.desafiobackend.requestsystem.domain.model;
 
+import com.uitalo.desafiobackend.requestsystem.domain.execption.BusinessRuleException;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -239,22 +241,22 @@ public class Solicitation {
 
     private void validateComplete() {
         if (serviceType == null) {
-            throw new IllegalStateException("Etapa 1: tipo de serviço não informado.");
+            throw new BusinessRuleException("Etapa 1: tipo de serviço não informado.");
         }
 
         if (title == null || description == null) {
-            throw new IllegalStateException("Etapa 1: dados básicos incompletos.");
+            throw new BusinessRuleException("Etapa 1: dados básicos incompletos.");
         }
 
         if (address == null || !address.isComplete()) {
-            throw new IllegalStateException("Etapa 2: endereço ou validação do CEP incompletos.");
+            throw new BusinessRuleException("Etapa 2: endereço ou validação do CEP incompletos.");
         }
 
         if (priority == null
                 || preferredDate == null
                 || estimatedValue == null
                 || !Boolean.TRUE.equals(termsAccepted)) {
-            throw new IllegalStateException("Etapa 3: confirmação incompleta.");
+            throw new BusinessRuleException("Etapa 3: confirmação incompleta.");
         }
     }
 
