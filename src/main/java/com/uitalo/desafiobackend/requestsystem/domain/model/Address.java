@@ -6,6 +6,7 @@ public record Address(
         String cep,
         String street,
         String city,
+        String neighborhood,
         String state,
         String number,
         String complement,
@@ -15,6 +16,7 @@ public record Address(
         cep = normalize(cep);
         street = normalize(street);
         city = normalize(city);
+        neighborhood = normalize(neighborhood);
         state = state == null
                 ? null
                 : state.trim().toUpperCase(Locale.ROOT);
@@ -55,6 +57,7 @@ public record Address(
         return cep != null
                 && street != null
                 && city != null
+                && neighborhood != null
                 && state != null
                 && number != null
                 && postalCodeValidated;

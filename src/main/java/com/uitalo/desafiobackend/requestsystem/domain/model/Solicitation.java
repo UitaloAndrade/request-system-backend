@@ -46,6 +46,52 @@ public class Solicitation {
         this.updatedAt = createdAt;
     }
 
+    public static Solicitation reconstitute(
+            UUID id,
+            UUID clientId,
+            Instant createdAt,
+            ServiceType serviceType,
+            String title,
+            String description,
+            Address address,
+            Priority priority,
+            LocalDate preferredDate,
+            BigDecimal estimatedValue,
+            Boolean termsAccepted,
+            SolicitationStatus status,
+            int currentStep,
+            UUID analystId,
+            Decision decision,
+            Instant updatedAt,
+            Instant submittedAt
+    ) {
+        Solicitation solicitation = new Solicitation(
+                id,
+                clientId,
+                createdAt
+        );
+
+        solicitation.serviceType = serviceType;
+        solicitation.title = title;
+        solicitation.description = description;
+        solicitation.address = address;
+        solicitation.priority = priority;
+        solicitation.preferredDate = preferredDate;
+        solicitation.estimatedValue = estimatedValue;
+        solicitation.termsAccepted = termsAccepted;
+
+        solicitation.status = Objects.requireNonNull(status);
+        solicitation.currentStep = currentStep;
+        solicitation.analystId = analystId;
+        solicitation.decision = decision;
+
+        solicitation.updatedAt = Objects.requireNonNull(updatedAt);
+        solicitation.submittedAt = submittedAt;
+
+        return solicitation;
+    }
+
+
     public void updateBasicData(
             ServiceType serviceType,
             String title,

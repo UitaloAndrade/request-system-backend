@@ -1,4 +1,4 @@
-package com.uitalo.desafiobackend.requestsystem.persistence;
+package com.uitalo.desafiobackend.requestsystem.adapters.out.persistence;
 
 import com.uitalo.desafiobackend.requestsystem.domain.model.User;
 import com.uitalo.desafiobackend.requestsystem.domain.model.UserRole;
