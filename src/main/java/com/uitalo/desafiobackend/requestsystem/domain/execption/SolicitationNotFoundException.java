@@ -4,6 +4,10 @@ import java.util.UUID;
 
 public class SolicitationNotFoundException extends RuntimeException {
 
+    public SolicitationNotFoundException(String message) {
+        super(message);
+    }
+
     public SolicitationNotFoundException(UUID id) {
         super("Solicitação não encontrada: " + id);
     }
