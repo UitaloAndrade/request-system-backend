@@ -14,10 +14,12 @@ API REST desenvolvida em Java com Spring Boot para gerenciar solicitações de a
 - [Executar localmente](#executar-localmente)
 - [Documentação da API](#documentação-da-api)
 - [Autenticação](#autenticação)
+- [Autorização e permissões](#autorização-e-permissões)
 - [Endpoints principais](#endpoints-principais)
 - [Pesquisa de solicitações com Elasticsearch](#pesquisa-de-solicitações-com-elasticsearch)
 - [Indexação e consistência dos dados](#indexação-e-consistência-dos-dados)
 - [Banco de dados e migrações](#banco-de-dados-e-migrações)
+- [Tratamento de erros](#tratamento-de-erros)
 - [Testes](#testes)
 - [Comandos úteis](#comandos-úteis)
 - [Solução de problemas](#solução-de-problemas)
@@ -27,15 +29,19 @@ API REST desenvolvida em Java com Spring Boot para gerenciar solicitações de a
 
 - Cadastro público de clientes.
 - Autenticação com e-mail e senha e emissão de token JWT.
-- Criação e edição de solicitações em etapas.
-- Consulta e validação de endereço a partir do CEP com integração ao ViaCEP.
-- Envio de solicitações para análise.
-- Análise de solicitações por analistas, respeitando as UFs sob responsabilidade de cada analista.
-- Decisão da análise, com aprovação ou rejeição.
+- Autorização baseada em papéis (`CLIENT`, `ANALYST` e `ADMIN`).
+- Criação e edição de solicitações em etapas, com persistência parcial.
+- Consulta e validação de endereço por CEP usando a integração com o ViaCEP.
+- Envio de solicitações para análise, respeitando as regras de negócio e as transições de status.
+- Análise de solicitações por analistas, respeitando a cobertura estadual cadastrada para cada analista.
+- Aprovação ou rejeição de solicitações com registro de comentário.
+- Acesso administrativo às funcionalidades de cliente e analista, sem restrição pela cobertura estadual do administrador.
 - Cadastro administrativo de usuários internos e configuração da cobertura estadual dos analistas.
+- Tratamento centralizado de exceções e respostas JSON padronizadas para erros.
 - Registro de auditoria das operações anotadas para auditoria.
 - Pesquisa textual e filtrada de solicitações usando Elasticsearch.
-- Indexação assíncrona com padrão **Transactional Outbox**, retentativas e atraso progressivo em caso de falha.
+- Indexação assíncrona por meio do padrão **Transactional Outbox**, com retentativas e atraso progressivo em caso de falha.
+- Testes automatizados das regras de domínio, dos serviços de aplicação, da pesquisa e das permissões.
 
 ### Fluxo geral de uma solicitação
 
@@ -286,6 +292,22 @@ A API utiliza autenticação baseada em JWT.
 
 O cadastro público cria usuários com perfil `CLIENT`. Usuários internos com perfil `ANALYST` ou `ADMIN` são criados por endpoint administrativo, conforme as permissões da aplicação. O token contém o identificador do usuário e o papel usado pela autorização.
 
+## Autorização e permissões
+
+A aplicação utiliza Spring Security e JWT para autenticar os usuários e controlar o acesso aos recursos conforme o papel atribuído.
+
+| Papel | Permissões principais |
+|---|---|
+| `CLIENT` | Criar, consultar e editar as próprias solicitações enquanto estiverem em rascunho, além de enviá-las para análise. |
+| `ANALYST` | Consultar, pesquisar, iniciar a análise e decidir solicitações dentro da cobertura estadual cadastrada para o usuário. |
+| `ADMIN` | Gerenciar usuários internos e acessar as funcionalidades de cliente e analista, sem a restrição de cobertura estadual aplicada aos analistas. |
+
+As permissões são verificadas no backend. A apresentação ou ocultação de funcionalidades no cliente não substitui as verificações de autorização da API.
+
+A autorização considera o papel do usuário e, conforme a operação, a propriedade da solicitação, seu estado atual e a cobertura estadual do analista.
+
+O administrador possui uma exceção explícita à restrição de cobertura estadual, permitindo pesquisar e analisar solicitações de qualquer UF. Essa exceção não elimina as validações de negócio aplicáveis às operações.
+
 ## Endpoints principais
 
 Os endpoints abaixo refletem os controladores presentes no código recebido. Consulte o Swagger para os contratos exatos de campos obrigatórios e respostas.
@@ -332,7 +354,14 @@ A configuração da cobertura estadual dos analistas é exposta pelo controlador
 
 ## Pesquisa de solicitações com Elasticsearch
 
-O endpoint `GET /analyst/solicitations/search` permite combinar pesquisa textual, filtros, paginação e ordenação. É necessário autenticar-se como `ANALYST` e ter cobertura para a UF dos registros consultados.
+O endpoint `GET /analyst/solicitations/search` permite combinar pesquisa textual, filtros, paginação e ordenação.
+
+O acesso é permitido aos usuários com papel `ANALYST` ou `ADMIN`:
+
+- **ANALYST:** a pesquisa respeita obrigatoriamente as UFs cadastradas na cobertura do usuário. Informar uma UF fora dessa cobertura não amplia as permissões.
+- **ADMIN:** pode pesquisar solicitações de todas as UFs, sem a restrição de cobertura estadual.
+
+A pesquisa também valida os parâmetros recebidos, incluindo paginação, intervalo de datas, valores de filtros e campos permitidos para ordenação.
 
 ### Parâmetros
 
@@ -388,13 +417,33 @@ As migrações são gerenciadas pelo Flyway e ficam em `src/main/resources/db/mi
 
 As migrações são executadas automaticamente pelo Flyway durante a inicialização da aplicação, conforme a configuração do ambiente. Mantenha os arquivos de migração versionados e não altere migrações que já tenham sido aplicadas em ambientes compartilhados; para mudanças futuras, crie uma nova migração com uma versão ainda não utilizada.
 
+## Tratamento de erros
+
+As exceções da aplicação são tratadas centralmente, com o objetivo de manter um formato consistente de resposta para os consumidores da API.
+
+As respostas de erro podem incluir informações como:
+
+- Status HTTP.
+- Código ou tipo do erro.
+- Mensagem explicativa.
+- Detalhes de validação dos campos, quando aplicável.
+- Data e hora da ocorrência, conforme o contrato implementado.
+
+Falhas de autenticação e autorização também devem retornar respostas JSON padronizadas, evitando respostas sem conteúdo útil para o consumidor da API. Para consultar o formato exato dos campos e os exemplos de resposta, verifique a implementação de `ErrorResponse`, `ErrorResponseWriter` e `GlobalExceptionHandler`, além dos testes correspondentes.
+
 ## Testes
 
-Com Maven Wrapper:
+O projeto utiliza testes automatizados para verificar regras de negócio, serviços de aplicação e comportamentos relacionados à segurança e à pesquisa de solicitações.
 
-```bash
-./mvnw clean test
-```
+### Cenários cobertos
+
+- **Regras de domínio:** validação dos dados da solicitação, limites dos campos, preenchimento das etapas, transições de status e regras de aprovação ou rejeição.
+- **Pesquisa de solicitações:** validação de filtros, paginação, ordenação, intervalo de datas e restrições de cobertura estadual.
+- **Serviços de análise:** consulta de solicitações, início da análise, validação de estados e registro de decisões.
+- **Permissões administrativas:** acesso do `ADMIN` às funcionalidades de análise e pesquisa sem a restrição de cobertura estadual.
+- **Tratamento de erros e segurança:** cenários relacionados às respostas de erro e à autenticação, conforme os testes existentes no projeto.
+
+### Executar todos os testes
 
 No Windows PowerShell:
 
@@ -402,13 +451,33 @@ No Windows PowerShell:
 .\mvnw.cmd clean test
 ```
 
-Ou com Maven instalado:
+No Linux/macOS:
+
+```bash
+./mvnw clean test
+```
+
+Se o Maven estiver instalado:
 
 ```bash
 mvn clean test
 ```
 
-O pacote de integração inclui testes unitários do serviço de pesquisa para validar regras como cobertura estadual, limite de tamanho da página e campos de ordenação aceitos. Execute a suíte de testes para validar as regras de negócio e as integrações do projeto.
+### Executar os testes de domínio, pesquisa e análise
+
+No Windows PowerShell:
+
+```powershell
+.\mvnw.cmd "-Dtest=SearchSolicitationsServiceTest,AnalystSolicitationServicesTest,SolicitationDomainRulesTest" test
+```
+
+No Linux/macOS:
+
+```bash
+./mvnw "-Dtest=SearchSolicitationsServiceTest,AnalystSolicitationServicesTest,SolicitationDomainRulesTest" test
+```
+
+O comando específico executa as classes de teste adicionadas para a pesquisa, os serviços de análise e as regras de domínio. O comando geral executa a suíte de testes do projeto. Execute os testes no ambiente local antes da entrega e confirme que todos passam.
 
 ## Comandos úteis
 
