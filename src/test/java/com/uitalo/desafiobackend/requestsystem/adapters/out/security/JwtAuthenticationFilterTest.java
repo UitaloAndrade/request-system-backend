@@ -1,5 +1,7 @@
 package com.uitalo.desafiobackend.requestsystem.adapters.out.security;
 
+import tools.jackson.databind.ObjectMapper;
+import com.uitalo.desafiobackend.requestsystem.adapters.in.web.exception.ErrorResponseWriter;
 import com.uitalo.desafiobackend.requestsystem.domain.model.User;
 import com.uitalo.desafiobackend.requestsystem.domain.model.UserRole;
 import com.uitalo.desafiobackend.requestsystem.domain.repository.UserRepository;
@@ -36,7 +38,8 @@ class JwtAuthenticationFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthenticationFilter(jwtService, userRepository);
+        filter = new JwtAuthenticationFilter(jwtService, userRepository,
+                new ErrorResponseWriter(new ObjectMapper()));
         SecurityContextHolder.clearContext();
     }
 
@@ -93,6 +96,9 @@ class JwtAuthenticationFilterTest {
         filter.doFilter(request, response, chain);
 
         assertEquals(401, response.getStatus());
+        assertEquals("application/json", response.getContentType());
+        assertTrue(response.getContentAsString().contains("INVALID_TOKEN"));
+        assertTrue(response.getContentAsString().contains("inválido ou expirou"));
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         assertNull(chain.getRequest());
 
@@ -117,6 +123,9 @@ class JwtAuthenticationFilterTest {
         filter.doFilter(request, response, chain);
 
         assertEquals(401, response.getStatus());
+        assertEquals("application/json", response.getContentType());
+        assertTrue(response.getContentAsString().contains("UNAUTHORIZED"));
+        assertTrue(response.getContentAsString().contains("não existe ou está inativo"));
         assertNull(chain.getRequest());
     }
 
@@ -139,6 +148,8 @@ class JwtAuthenticationFilterTest {
         filter.doFilter(request, response, chain);
 
         assertEquals(401, response.getStatus());
+        assertEquals("application/json", response.getContentType());
+        assertTrue(response.getContentAsString().contains("UNAUTHORIZED"));
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         assertNull(chain.getRequest());
     }

@@ -1,5 +1,6 @@
 package com.uitalo.desafiobackend.requestsystem.adapters.out.security;
 
+import com.uitalo.desafiobackend.requestsystem.adapters.in.web.exception.ErrorResponseWriter;
 import com.uitalo.desafiobackend.requestsystem.domain.model.User;
 import com.uitalo.desafiobackend.requestsystem.domain.repository.UserRepository;
 import io.jsonwebtoken.JwtException;
@@ -8,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,12 +25,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final ErrorResponseWriter errorResponseWriter;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ErrorResponseWriter errorResponseWriter) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.errorResponseWriter = errorResponseWriter;
     }
 
     @Override
@@ -54,7 +59,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (user == null || !user.isActive()) {
                 SecurityContextHolder.clearContext();
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                errorResponseWriter.write(
+                        request,
+                        response,
+                        HttpStatus.UNAUTHORIZED,
+                        "UNAUTHORIZED",
+                        "O usuário associado ao token não existe ou está inativo."
+                );
                 return;
             }
 
@@ -73,7 +84,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (JwtException | IllegalArgumentException exception) {
             SecurityContextHolder.clearContext();
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            errorResponseWriter.write(
+                    request,
+                    response,
+                    HttpStatus.UNAUTHORIZED,
+                    "INVALID_TOKEN",
+                    "O token de autenticação é inválido ou expirou."
+            );
             return;
         }
 
