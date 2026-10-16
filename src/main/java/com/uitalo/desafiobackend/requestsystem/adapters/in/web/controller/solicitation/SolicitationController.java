@@ -5,6 +5,8 @@ import com.uitalo.desafiobackend.requestsystem.domain.model.Address;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Priority;
 import com.uitalo.desafiobackend.requestsystem.domain.model.ServiceType;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Solicitation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +24,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/solicitations")
+@Tag(
+        name = "Solicitações",
+        description = "Criação, edição, consulta e envio de solicitações de atendimento."
+)
 public class SolicitationController {
 
     private final CreateSolicitationUseCase createUseCase;
@@ -46,6 +52,13 @@ public class SolicitationController {
         this.submitUseCase = submitUseCase;
     }
 
+    @Operation(
+            summary = "Criar solicitação",
+            description = """
+        Cria uma nova solicitação em rascunho vinculada ao cliente autenticado.
+        O identificador do cliente é obtido a partir do contexto de autenticação.
+        """
+    )
     @PostMapping
     public ResponseEntity<SolicitationResponse> create(
             @AuthenticationPrincipal String principal) {
@@ -86,6 +99,14 @@ public class SolicitationController {
         return ResponseEntity.ok(SolicitationResponse.from(solicitation));
     }
 
+    @Operation(
+            summary = "Atualizar endereço",
+            description = """
+        Atualiza o endereço da solicitação em rascunho.
+        Os dados de logradouro, bairro, cidade e UF são consultados
+        a partir do CEP informado por meio da integração com o ViaCEP.
+        """
+    )
     @PatchMapping("/{id}/address")
     public ResponseEntity<SolicitationResponse> updateAddress(
             @PathVariable UUID id,
