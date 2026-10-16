@@ -1,5 +1,6 @@
 package com.uitalo.desafiobackend.requestsystem.adapters.in.web.exception;
 
+import com.uitalo.desafiobackend.requestsystem.domain.execption.AnalystCoverageDeniedException;
 import com.uitalo.desafiobackend.requestsystem.domain.execption.BusinessRuleException;
 import com.uitalo.desafiobackend.requestsystem.domain.execption.InvalidCredentialsException;
 import com.uitalo.desafiobackend.requestsystem.domain.execption.UserNotFoundException;
@@ -61,6 +62,15 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(AnalystCoverageDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAnalystCoverageDenied(
+            AnalystCoverageDeniedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(Map.of("message", exception.getMessage()));
     }
 }
