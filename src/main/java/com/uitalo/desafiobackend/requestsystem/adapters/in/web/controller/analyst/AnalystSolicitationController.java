@@ -6,10 +6,12 @@ import com.uitalo.desafiobackend.requestsystem.application.usecase.analyst.Decid
 import com.uitalo.desafiobackend.requestsystem.application.usecase.analyst.GetSolicitationForAnalysisUseCase;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.analyst.StartAnalysisUseCase;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Solicitation;
+import com.uitalo.desafiobackend.requestsystem.infrastructure.config.security.SecurityRoleUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,17 +44,21 @@ public class AnalystSolicitationController {
             description = """
         Retorna os dados da solicitação para avaliação.
         O analista precisa possuir abrangência sobre a UF do endereço
-        da solicitação.
+        da solicitação. Administradores podem consultar qualquer solicitação.
         """
     )
     @GetMapping("/{id}")
     public ResponseEntity<AnalysisResponse> getById(
             @PathVariable UUID id,
-            @AuthenticationPrincipal String principal
+            @AuthenticationPrincipal String principal,
+            Authentication authentication
     ) {
         UUID analystId = UUID.fromString(principal);
+        boolean administrator = SecurityRoleUtils.isAdmin(authentication);
 
-        Solicitation solicitation = getUseCase.getById(id, analystId);
+        Solicitation solicitation = administrator
+                ? getUseCase.getById(id, analystId, true)
+                : getUseCase.getById(id, analystId);
 
         return ResponseEntity.ok(AnalysisResponse.from(solicitation));
     }
@@ -61,18 +67,22 @@ public class AnalystSolicitationController {
             summary = "Iniciar análise",
             description = """
         Inicia a análise de uma solicitação enviada pelo cliente,
-        vinculando-a ao analista autenticado e alterando seu status
-        para IN_REVIEW.
+        vinculando-a ao usuário autenticado e alterando seu status
+        para IN_REVIEW. Administradores podem iniciar a análise independentemente da UF.
         """
     )
     @PostMapping("/{id}/start")
     public ResponseEntity<AnalysisResponse> start(
             @PathVariable UUID id,
-            @AuthenticationPrincipal String principal
+            @AuthenticationPrincipal String principal,
+            Authentication authentication
     ) {
         UUID analystId = UUID.fromString(principal);
+        boolean administrator = SecurityRoleUtils.isAdmin(authentication);
 
-        Solicitation solicitation = startUseCase.start(id, analystId);
+        Solicitation solicitation = administrator
+                ? startUseCase.start(id, analystId, true)
+                : startUseCase.start(id, analystId);
 
         return ResponseEntity.ok(AnalysisResponse.from(solicitation));
     }
@@ -81,23 +91,23 @@ public class AnalystSolicitationController {
             summary = "Decidir solicitação",
             description = """
         Registra a decisão de aprovação ou rejeição de uma solicitação
-        em análise, incluindo o comentário justificativo do analista.
+        em análise, incluindo o comentário justificativo. Administradores podem decidir
+        solicitações independentemente da cobertura e do analista originalmente responsável.
         """
     )
     @PostMapping("/{id}/decide")
     public ResponseEntity<AnalysisResponse> decide(
             @PathVariable UUID id,
             @AuthenticationPrincipal String principal,
-            @Valid @RequestBody DecisionRequest request
+            @Valid @RequestBody DecisionRequest request,
+            Authentication authentication
     ) {
         UUID analystId = UUID.fromString(principal);
+        boolean administrator = SecurityRoleUtils.isAdmin(authentication);
 
-        Solicitation solicitation = decideUseCase.decide(
-                id,
-                analystId,
-                request.type(),
-                request.comment()
-        );
+        Solicitation solicitation = administrator
+                ? decideUseCase.decide(id, analystId, request.type(), request.comment(), true)
+                : decideUseCase.decide(id, analystId, request.type(), request.comment());
 
         return ResponseEntity.ok(AnalysisResponse.from(solicitation));
     }

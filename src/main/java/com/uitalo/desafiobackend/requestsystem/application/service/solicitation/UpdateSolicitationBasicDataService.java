@@ -37,10 +37,29 @@ public class UpdateSolicitationBasicDataService
             String title,
             String description) {
 
-        Solicitation solicitation = solicitationRepository
-                .findByIdAndClientId(solicitationId, clientId)
+        return update(solicitationId, clientId, serviceType, title, description, false);
+    }
+
+    @Override
+    @Transactional
+    @Audited(
+            action = "SOLICITATION_BASIC_DATA_UPDATED",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
+    public Solicitation update(
+            UUID solicitationId,
+            UUID clientId,
+            ServiceType serviceType,
+            String title,
+            String description,
+            boolean administrator) {
+        Solicitation solicitation = (administrator
+                ? solicitationRepository.findById(solicitationId)
+                : solicitationRepository.findByIdAndClientId(solicitationId, clientId))
                 .orElseThrow(() -> new SolicitationNotFoundException(
-                        "Solicitação não encontrada para o cliente informado."
+                        administrator ? "Solicitação não encontrada."
+                                : "Solicitação não encontrada para o cliente informado."
                 ));
 
         solicitation.updateBasicData(

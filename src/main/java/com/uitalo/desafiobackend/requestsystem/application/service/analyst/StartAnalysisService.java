@@ -30,6 +30,12 @@ public class StartAnalysisService implements StartAnalysisUseCase {
     @Override
     @Transactional
     public Solicitation start(UUID solicitationId, UUID analystId) {
+        return start(solicitationId, analystId, false);
+    }
+
+    @Override
+    @Transactional
+    public Solicitation start(UUID solicitationId, UUID analystId, boolean administrator) {
         Solicitation solicitation = solicitationRepository.findById(solicitationId)
                 .orElseThrow(() ->
                         new SolicitationNotFoundException(
@@ -37,7 +43,9 @@ public class StartAnalysisService implements StartAnalysisUseCase {
                         )
                 );
 
-        validateCoverage(solicitation, analystId);
+        if (!administrator) {
+            validateCoverage(solicitation, analystId);
+        }
 
         // O domínio valida a transição SUBMITTED -> IN_REVIEW.
         solicitation.startReview(analystId, Instant.now());

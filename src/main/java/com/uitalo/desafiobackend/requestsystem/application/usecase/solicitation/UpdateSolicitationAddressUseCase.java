@@ -13,4 +13,13 @@ public interface UpdateSolicitationAddressUseCase {
             String number,
             String complement
     );
+
+    Solicitation update(
+            UUID solicitationId,
+            UUID clientId,
+            String cep,
+            String number,
+            String complement,
+            boolean administrator
+    );
 }

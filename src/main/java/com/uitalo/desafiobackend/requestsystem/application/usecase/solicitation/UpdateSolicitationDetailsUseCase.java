@@ -17,4 +17,14 @@ public interface UpdateSolicitationDetailsUseCase {
             BigDecimal estimatedValue,
             Boolean termsAccepted
     );
+
+    Solicitation update(
+            UUID solicitationId,
+            UUID clientId,
+            Priority priority,
+            LocalDate preferredDate,
+            BigDecimal estimatedValue,
+            Boolean termsAccepted,
+            boolean administrator
+    );
 }

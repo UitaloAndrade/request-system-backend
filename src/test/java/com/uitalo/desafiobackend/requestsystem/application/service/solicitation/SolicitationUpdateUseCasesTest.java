@@ -88,6 +88,28 @@ class SolicitationUpdateUseCasesTest {
     }
 
     @Test
+    void shouldAllowAdministratorToUpdateSolicitationNotOwnedByCurrentUser() {
+        Solicitation solicitation = newDraftSolicitation();
+        when(solicitationRepository.findById(solicitationId))
+                .thenReturn(Optional.of(solicitation));
+        mockSave();
+
+        Solicitation result = basicDataService.update(
+                solicitationId,
+                clientId,
+                ServiceType.INSTALLATION,
+                "Instalação de equipamento",
+                "Solicito a instalação de um equipamento no endereço informado.",
+                true
+        );
+
+        assertThat(result.getTitle()).isEqualTo("Instalação de equipamento");
+        verify(solicitationRepository).findById(solicitationId);
+        verify(solicitationRepository, never()).findByIdAndClientId(any(), any());
+        verify(solicitationRepository).save(solicitation);
+    }
+
+    @Test
     void shouldNotUpdateBasicDataWhenSolicitationDoesNotBelongToClient() {
         when(solicitationRepository.findByIdAndClientId(
                 solicitationId, clientId))

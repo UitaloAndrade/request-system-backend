@@ -95,14 +95,16 @@ public class ElasticsearchSolicitationSearchAdapter implements SolicitationSearc
                         .value(FieldValue.of(criteria.priority()))));
             }
 
-            // Sempre existe um filtro de UF imposto pelo serviço de aplicação.
-            List<FieldValue> states = criteria.allowedStates().stream()
-                    .map(FieldValue::of)
-                    .toList();
-
-            bool.filter(filter -> filter.terms(terms -> terms
-                    .field("state")
-                    .terms(values -> values.value(states))));
+            // Empty allowedStates means an unrestricted search (ADMIN only).
+            // Analyst requests are always restricted by SearchSolicitationsService.
+            if (!criteria.allowedStates().isEmpty()) {
+                List<FieldValue> states = criteria.allowedStates().stream()
+                        .map(FieldValue::of)
+                        .toList();
+                bool.filter(filter -> filter.terms(terms -> terms
+                        .field("state")
+                        .terms(values -> values.value(states))));
+            }
 
             if (criteria.dateFrom() != null || criteria.dateTo() != null) {
                 bool.filter(filter -> filter.range(range -> range.date(date -> {

@@ -29,15 +29,26 @@ public class SubmitSolicitationService implements SubmitSolicitationUseCase {
             resourceIdParameter = 0
     )
     public Solicitation submit(UUID solicitationId, UUID clientId) {
+        return submit(solicitationId, clientId, false);
+    }
 
-        Solicitation solicitation = solicitationRepository
-                .findByIdAndClientId(solicitationId, clientId)
+    @Override
+    @Transactional
+    @Audited(
+            action = "SOLICITATION_SUBMIT",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
+    public Solicitation submit(UUID solicitationId, UUID clientId, boolean administrator) {
+        Solicitation solicitation = (administrator
+                ? solicitationRepository.findById(solicitationId)
+                : solicitationRepository.findByIdAndClientId(solicitationId, clientId))
                 .orElseThrow(() -> new SolicitationNotFoundException(
-                        "Solicitação não encontrada para o cliente informado."
+                        administrator ? "Solicitação não encontrada."
+                                : "Solicitação não encontrada para o cliente informado."
                 ));
 
         solicitation.submit(Instant.now());
-
         return solicitationRepository.save(solicitation);
     }
 }

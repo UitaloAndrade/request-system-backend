@@ -37,6 +37,18 @@ public class DecideSolicitationService implements DecideSolicitationUseCase {
             DecisionType type,
             String comment
     ) {
+        return decide(solicitationId, analystId, type, comment, false);
+    }
+
+    @Override
+    @Transactional
+    public Solicitation decide(
+            UUID solicitationId,
+            UUID analystId,
+            DecisionType type,
+            String comment,
+            boolean administrator
+    ) {
         Solicitation solicitation = solicitationRepository.findById(solicitationId)
                 .orElseThrow(() ->
                         new SolicitationNotFoundException(
@@ -44,7 +56,9 @@ public class DecideSolicitationService implements DecideSolicitationUseCase {
                         )
                 );
 
-        validateCoverage(solicitation, analystId);
+        if (!administrator) {
+            validateCoverage(solicitation, analystId);
+        }
 
         Decision decision = new Decision(
                 analystId,
@@ -53,8 +67,12 @@ public class DecideSolicitationService implements DecideSolicitationUseCase {
                 Instant.now()
         );
 
-        // O domínio verifica o status e se o analista é o responsável.
-        solicitation.decide(decision, Instant.now());
+        // Analistas precisam ser os responsáveis; administradores podem intervir.
+        if (administrator) {
+            solicitation.decideByAdministrator(decision, Instant.now());
+        } else {
+            solicitation.decide(decision, Instant.now());
+        }
 
         return solicitationRepository.save(solicitation);
     }

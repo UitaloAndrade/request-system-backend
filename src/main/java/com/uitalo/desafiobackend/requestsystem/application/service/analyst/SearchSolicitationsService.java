@@ -51,6 +51,26 @@ public class SearchSolicitationsService implements SearchSolicitationsUseCase {
             String sort,
             UUID analystId
     ) {
+        return search(q, status, serviceType, priority, state, dateFrom, dateTo,
+                page, size, sort, analystId, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SolicitationSearchPort.SearchPage search(
+            String q,
+            String status,
+            String serviceType,
+            String priority,
+            String state,
+            LocalDate dateFrom,
+            LocalDate dateTo,
+            int page,
+            int size,
+            String sort,
+            UUID analystId,
+            boolean administrator
+    ) {
         if (page < 0) {
             throw new IllegalArgumentException("O parâmetro page não pode ser negativo.");
         }
@@ -69,16 +89,22 @@ public class SearchSolicitationsService implements SearchSolicitationsUseCase {
         if (normalizedState != null && !normalizedState.matches("[A-Z]{2}")) {
             throw new IllegalArgumentException("state deve conter a sigla de uma UF com duas letras.");
         }
-        List<String> allowedStates = coverageRepository.findByAnalystId(analystId)
-                .stream()
-                .map(AnalystCoverage::state)
-                .distinct()
-                .toList();
+        List<String> allowedStates;
+        if (administrator) {
+            // Empty means no UF restriction for ADMIN; an explicitly supplied state remains a filter.
+            allowedStates = normalizedState == null ? List.of() : List.of(normalizedState);
+        } else {
+            allowedStates = coverageRepository.findByAnalystId(analystId)
+                    .stream()
+                    .map(AnalystCoverage::state)
+                    .distinct()
+                    .toList();
 
-        // A UF enviada pelo cliente nunca substitui a abrangência autorizada.
-        if (allowedStates.isEmpty()
-                || (normalizedState != null && !allowedStates.contains(normalizedState))) {
-            return new SolicitationSearchPort.SearchPage(List.of(), page, size, 0);
+            // A UF enviada pelo cliente nunca substitui a abrangência autorizada.
+            if (allowedStates.isEmpty()
+                    || (normalizedState != null && !allowedStates.contains(normalizedState))) {
+                return new SolicitationSearchPort.SearchPage(List.of(), page, size, 0);
+            }
         }
 
         String sortField = "createdAt";

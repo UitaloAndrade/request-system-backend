@@ -20,4 +20,10 @@ public interface SearchSolicitationsUseCase {
             String sort,
             UUID analystId
     );
+
+    SolicitationSearchPort.SearchPage search(
+            String q, String status, String serviceType, String priority, String state,
+            LocalDate dateFrom, LocalDate dateTo, int page, int size, String sort,
+            UUID analystId, boolean administrator
+    );
 }

@@ -2,10 +2,12 @@ package com.uitalo.desafiobackend.requestsystem.adapters.in.web.controller.analy
 
 import com.uitalo.desafiobackend.requestsystem.application.port.out.SolicitationSearchPort;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.analyst.SearchSolicitationsUseCase;
+import com.uitalo.desafiobackend.requestsystem.infrastructure.config.security.SecurityRoleUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,9 +38,9 @@ public class AnalystSolicitationSearchController {
             summary = "Pesquisar solicitações",
             description = """
                 Pesquisa solicitações por texto, status, tipo de serviço,
-                prioridade, UF e período de criação. O backend sempre limita
-                os resultados às UFs cobertas pelo analista autenticado.
-                Se a UF solicitada não estiver na cobertura, a resposta será vazia.
+                prioridade, UF e período de criação. Para analistas, o backend limita
+                os resultados às UFs cobertas pelo usuário autenticado. Administradores
+                podem pesquisar em todas as UFs, aplicando opcionalmente um filtro de UF.
                 """
     )
     public SolicitationSearchPort.SearchPage search(
@@ -71,12 +73,15 @@ public class AnalystSolicitationSearchController {
             @Parameter(description = "Campo e direção, por exemplo createdAt,desc. Campos permitidos: createdAt, updatedAt, submittedAt, preferredDate, status, priority.")
             @RequestParam(defaultValue = "createdAt,desc") String sort,
 
-            @AuthenticationPrincipal String principal
+            @AuthenticationPrincipal String principal,
+            Authentication authentication
     ) {
         UUID analystId = UUID.fromString(principal);
-        return searchUseCase.search(
-                q, status, serviceType, priority, state,
-                dateFrom, dateTo, page, size, sort, analystId
-        );
+        boolean administrator = SecurityRoleUtils.isAdmin(authentication);
+        return administrator
+                ? searchUseCase.search(q, status, serviceType, priority, state,
+                dateFrom, dateTo, page, size, sort, analystId, true)
+                : searchUseCase.search(q, status, serviceType, priority, state,
+                dateFrom, dateTo, page, size, sort, analystId);
     }
 }

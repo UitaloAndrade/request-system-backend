@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface StartAnalysisUseCase {
 
     Solicitation start(UUID solicitationId, UUID analystId);
+
+    Solicitation start(UUID solicitationId, UUID analystId, boolean administrator);
 }

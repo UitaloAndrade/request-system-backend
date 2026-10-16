@@ -21,10 +21,19 @@ public class GetSolicitationService implements GetSolicitationUseCase {
     @Override
     @Transactional(readOnly = true)
     public Solicitation getById(UUID solicitationId, UUID clientId) {
-        return solicitationRepository
-                .findByIdAndClientId(solicitationId, clientId)
-                .orElseThrow(() -> new SolicitationNotFoundException(
-                        "Solicitação não encontrada para o cliente informado."
-                ));
+        return getById(solicitationId, clientId, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Solicitation getById(UUID solicitationId, UUID clientId, boolean administrator) {
+        var result = administrator
+                ? solicitationRepository.findById(solicitationId)
+                : solicitationRepository.findByIdAndClientId(solicitationId, clientId);
+        return result.orElseThrow(() -> new SolicitationNotFoundException(
+                administrator
+                        ? "Solicitação não encontrada."
+                        : "Solicitação não encontrada para o cliente informado."
+        ));
     }
 }

@@ -1,6 +1,7 @@
 package com.uitalo.desafiobackend.requestsystem.adapters.in.web.controller.solicitation;
 
 import com.uitalo.desafiobackend.requestsystem.application.usecase.solicitation.*;
+import com.uitalo.desafiobackend.requestsystem.infrastructure.config.security.SecurityRoleUtils;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Address;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Priority;
 import com.uitalo.desafiobackend.requestsystem.domain.model.ServiceType;
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,10 +76,13 @@ public class SolicitationController {
     @GetMapping("/{id}")
     public ResponseEntity<SolicitationResponse> getById(
             @PathVariable UUID id,
-            @AuthenticationPrincipal String principal) {
+            @AuthenticationPrincipal String principal,
+            Authentication authentication) {
 
-        Solicitation solicitation = getUseCase.getById(
-                id, authenticatedUserId(principal));
+        boolean administrator = SecurityRoleUtils.isAdmin(authentication);
+        Solicitation solicitation = administrator
+                ? getUseCase.getById(id, authenticatedUserId(principal), true)
+                : getUseCase.getById(id, authenticatedUserId(principal));
 
         return ResponseEntity.ok(SolicitationResponse.from(solicitation));
     }
@@ -86,15 +91,14 @@ public class SolicitationController {
     public ResponseEntity<SolicitationResponse> updateBasicData(
             @PathVariable UUID id,
             @AuthenticationPrincipal String principal,
-            @Valid @RequestBody BasicDataRequest request) {
+            @Valid @RequestBody BasicDataRequest request,
+            Authentication authentication) {
 
-        Solicitation solicitation = basicDataUseCase.update(
-                id,
-                authenticatedUserId(principal),
-                request.serviceType(),
-                request.title(),
-                request.description()
-        );
+        Solicitation solicitation = SecurityRoleUtils.isAdmin(authentication)
+                ? basicDataUseCase.update(id, authenticatedUserId(principal), request.serviceType(),
+                request.title(), request.description(), true)
+                : basicDataUseCase.update(id, authenticatedUserId(principal), request.serviceType(),
+                request.title(), request.description());
 
         return ResponseEntity.ok(SolicitationResponse.from(solicitation));
     }
@@ -111,15 +115,14 @@ public class SolicitationController {
     public ResponseEntity<SolicitationResponse> updateAddress(
             @PathVariable UUID id,
             @AuthenticationPrincipal String principal,
-            @Valid @RequestBody AddressRequest request) {
+            @Valid @RequestBody AddressRequest request,
+            Authentication authentication) {
 
-        Solicitation solicitation = addressUseCase.update(
-                id,
-                authenticatedUserId(principal),
-                request.cep(),
-                request.number(),
-                request.complement()
-        );
+        Solicitation solicitation = SecurityRoleUtils.isAdmin(authentication)
+                ? addressUseCase.update(id, authenticatedUserId(principal), request.cep(),
+                request.number(), request.complement(), true)
+                : addressUseCase.update(id, authenticatedUserId(principal), request.cep(),
+                request.number(), request.complement());
 
         return ResponseEntity.ok(SolicitationResponse.from(solicitation));
     }
@@ -128,16 +131,14 @@ public class SolicitationController {
     public ResponseEntity<SolicitationResponse> updateDetails(
             @PathVariable UUID id,
             @AuthenticationPrincipal String principal,
-            @Valid @RequestBody DetailsRequest request) {
+            @Valid @RequestBody DetailsRequest request,
+            Authentication authentication) {
 
-        Solicitation solicitation = detailsUseCase.update(
-                id,
-                authenticatedUserId(principal),
-                request.priority(),
-                request.preferredDate(),
-                request.estimatedValue(),
-                request.termsAccepted()
-        );
+        Solicitation solicitation = SecurityRoleUtils.isAdmin(authentication)
+                ? detailsUseCase.update(id, authenticatedUserId(principal), request.priority(),
+                request.preferredDate(), request.estimatedValue(), request.termsAccepted(), true)
+                : detailsUseCase.update(id, authenticatedUserId(principal), request.priority(),
+                request.preferredDate(), request.estimatedValue(), request.termsAccepted());
 
         return ResponseEntity.ok(SolicitationResponse.from(solicitation));
     }
@@ -145,10 +146,12 @@ public class SolicitationController {
     @PostMapping("/{id}/submit")
     public ResponseEntity<SolicitationResponse> submit(
             @PathVariable UUID id,
-            @AuthenticationPrincipal String principal) {
+            @AuthenticationPrincipal String principal,
+            Authentication authentication) {
 
-        Solicitation solicitation = submitUseCase.submit(
-                id, authenticatedUserId(principal));
+        Solicitation solicitation = SecurityRoleUtils.isAdmin(authentication)
+                ? submitUseCase.submit(id, authenticatedUserId(principal), true)
+                : submitUseCase.submit(id, authenticatedUserId(principal));
 
         return ResponseEntity.ok(SolicitationResponse.from(solicitation));
     }

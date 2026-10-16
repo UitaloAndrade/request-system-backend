@@ -30,6 +30,12 @@ public class GetSolicitationForAnalysisService
     @Override
     @Transactional(readOnly = true)
     public Solicitation getById(UUID solicitationId, UUID analystId) {
+        return getById(solicitationId, analystId, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Solicitation getById(UUID solicitationId, UUID analystId, boolean administrator) {
         Solicitation solicitation = solicitationRepository.findById(solicitationId)
                 .orElseThrow(() ->
                         new SolicitationNotFoundException(
@@ -37,7 +43,9 @@ public class GetSolicitationForAnalysisService
                         )
                 );
 
-        validateCoverage(solicitation, analystId);
+        if (!administrator) {
+            validateCoverage(solicitation, analystId);
+        }
 
         return solicitation;
     }

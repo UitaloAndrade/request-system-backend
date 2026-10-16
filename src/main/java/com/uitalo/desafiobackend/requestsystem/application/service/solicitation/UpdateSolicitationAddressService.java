@@ -42,10 +42,29 @@ public class UpdateSolicitationAddressService
             String number,
             String complement) {
 
-        Solicitation solicitation = solicitationRepository
-                .findByIdAndClientId(solicitationId, clientId)
+        return update(solicitationId, clientId, cep, number, complement, false);
+    }
+
+    @Override
+    @Transactional
+    @Audited(
+            action = "SOLICITATION_ADDRESS_UPDATED",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
+    public Solicitation update(
+            UUID solicitationId,
+            UUID clientId,
+            String cep,
+            String number,
+            String complement,
+            boolean administrator) {
+        Solicitation solicitation = (administrator
+                ? solicitationRepository.findById(solicitationId)
+                : solicitationRepository.findByIdAndClientId(solicitationId, clientId))
                 .orElseThrow(() -> new SolicitationNotFoundException(
-                        "Solicitação não encontrada para o cliente informado."
+                        administrator ? "Solicitação não encontrada."
+                                : "Solicitação não encontrada para o cliente informado."
                 ));
 
         PostalCodeLookup.PostalCodeAddress postalAddress =

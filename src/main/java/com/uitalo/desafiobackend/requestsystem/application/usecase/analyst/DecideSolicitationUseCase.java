@@ -13,4 +13,12 @@ public interface DecideSolicitationUseCase {
             DecisionType type,
             String comment
     );
+
+    Solicitation decide(
+            UUID solicitationId,
+            UUID analystId,
+            DecisionType type,
+            String comment,
+            boolean administrator
+    );
 }

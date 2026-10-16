@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface SubmitSolicitationUseCase {
 
     Solicitation submit(UUID solicitationId, UUID clientId);
+
+    Solicitation submit(UUID solicitationId, UUID clientId, boolean administrator);
 }

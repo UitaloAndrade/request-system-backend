@@ -2,11 +2,10 @@ package com.uitalo.desafiobackend.requestsystem.infrastructure.config.security;
 
 import com.uitalo.desafiobackend.requestsystem.adapters.in.web.exception.ErrorResponseWriter;
 import com.uitalo.desafiobackend.requestsystem.adapters.out.security.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -46,13 +45,13 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Operações de análise
-                        .requestMatchers("/analyst/**").hasRole("ANALYST")
+                        .requestMatchers("/analyst/**").hasAnyRole("ANALYST", "ADMIN")
 
                         // Consulta de CEP: qualquer usuário autenticado
                         .requestMatchers("/addresses/**").authenticated()
 
                         // Solicitações: somente clientes
-                        .requestMatchers("/solicitations/**").hasRole("CLIENT")
+                        .requestMatchers("/solicitations/**").hasAnyRole("CLIENT", "ADMIN")
 
                         // Demais endpoints exigem autenticação
                         .anyRequest().authenticated()

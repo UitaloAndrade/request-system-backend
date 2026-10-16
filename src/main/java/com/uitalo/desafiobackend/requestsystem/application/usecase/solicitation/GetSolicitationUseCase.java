@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface GetSolicitationUseCase {
 
     Solicitation getById(UUID solicitationId, UUID clientId);
+
+    Solicitation getById(UUID solicitationId, UUID clientId, boolean administrator);
 }

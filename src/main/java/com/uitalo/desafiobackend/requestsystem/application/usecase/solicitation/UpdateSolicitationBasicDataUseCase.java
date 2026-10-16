@@ -14,4 +14,13 @@ public interface UpdateSolicitationBasicDataUseCase {
             String title,
             String description
     );
+
+    Solicitation update(
+            UUID solicitationId,
+            UUID clientId,
+            ServiceType serviceType,
+            String title,
+            String description,
+            boolean administrator
+    );
 }

@@ -40,10 +40,31 @@ public class UpdateSolicitationDetailsService
             BigDecimal estimatedValue,
             Boolean termsAccepted) {
 
-        Solicitation solicitation = solicitationRepository
-                .findByIdAndClientId(solicitationId, clientId)
+        return update(solicitationId, clientId, priority, preferredDate,
+                estimatedValue, termsAccepted, false);
+    }
+
+    @Override
+    @Transactional
+    @Audited(
+            action = "SOLICITATION_DETAILS_UPDATED",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
+    public Solicitation update(
+            UUID solicitationId,
+            UUID clientId,
+            Priority priority,
+            LocalDate preferredDate,
+            BigDecimal estimatedValue,
+            Boolean termsAccepted,
+            boolean administrator) {
+        Solicitation solicitation = (administrator
+                ? solicitationRepository.findById(solicitationId)
+                : solicitationRepository.findByIdAndClientId(solicitationId, clientId))
                 .orElseThrow(() -> new SolicitationNotFoundException(
-                        "Solicitação não encontrada para o cliente informado."
+                        administrator ? "Solicitação não encontrada."
+                                : "Solicitação não encontrada para o cliente informado."
                 ));
 
         solicitation.confirmDetails(

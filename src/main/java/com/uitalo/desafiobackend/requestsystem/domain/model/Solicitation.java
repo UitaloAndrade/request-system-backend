@@ -217,26 +217,37 @@ public class Solicitation {
     }
 
     public void decide(Decision decision, Instant now) {
-        if (this.status != SolicitationStatus.IN_REVIEW) {
-            throw new IllegalStateException(
-                    "Somente solicitações em análise podem receber uma decisão."
-            );
-        }
-
-        Objects.requireNonNull(decision, "A decisão é obrigatória.");
-
+        validateDecisionState(decision, now);
         if (!decision.analystId().equals(this.analystId)) {
             throw new IllegalArgumentException(
                     "A decisão deve ser realizada pelo analista responsável."
             );
         }
+        applyDecision(decision, now);
+    }
 
+    /** Allows an administrator to decide a request even when another analyst started its review. */
+    public void decideByAdministrator(Decision decision, Instant now) {
+        validateDecisionState(decision, now);
+        applyDecision(decision, now);
+    }
+
+    private void validateDecisionState(Decision decision, Instant now) {
+        if (this.status != SolicitationStatus.IN_REVIEW) {
+            throw new IllegalStateException(
+                    "Somente solicitações em análise podem receber uma decisão."
+            );
+        }
+        Objects.requireNonNull(decision, "A decisão é obrigatória.");
+        Objects.requireNonNull(now, "A data da decisão é obrigatória.");
+    }
+
+    private void applyDecision(Decision decision, Instant now) {
         this.decision = decision;
         this.status = decision.type() == DecisionType.APPROVE
                 ? SolicitationStatus.APPROVED
                 : SolicitationStatus.REJECTED;
-
-        this.updatedAt = Objects.requireNonNull(now);
+        this.updatedAt = now;
     }
 
     private void validateComplete() {
