@@ -1,5 +1,6 @@
 package com.uitalo.desafiobackend.requestsystem.application.service.solicitation;
 
+import com.uitalo.desafiobackend.requestsystem.application.audit.Audited;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.solicitation.UpdateSolicitationBasicDataUseCase;
 import com.uitalo.desafiobackend.requestsystem.domain.execption.SolicitationNotFoundException;
 import com.uitalo.desafiobackend.requestsystem.domain.model.ServiceType;
@@ -24,6 +25,11 @@ public class UpdateSolicitationBasicDataService
 
     @Override
     @Transactional
+    @Audited(
+            action = "SOLICITATION_BASIC_DATA_UPDATED",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
     public Solicitation update(
             UUID solicitationId,
             UUID clientId,

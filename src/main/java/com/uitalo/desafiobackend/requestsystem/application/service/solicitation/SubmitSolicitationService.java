@@ -1,5 +1,6 @@
 package com.uitalo.desafiobackend.requestsystem.application.service.solicitation;
 
+import com.uitalo.desafiobackend.requestsystem.application.audit.Audited;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.solicitation.SubmitSolicitationUseCase;
 import com.uitalo.desafiobackend.requestsystem.domain.execption.SolicitationNotFoundException;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Solicitation;
@@ -22,6 +23,11 @@ public class SubmitSolicitationService implements SubmitSolicitationUseCase {
 
     @Override
     @Transactional
+    @Audited(
+            action = "SOLICITATION_SUBMIT",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
     public Solicitation submit(UUID solicitationId, UUID clientId) {
 
         Solicitation solicitation = solicitationRepository

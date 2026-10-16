@@ -1,5 +1,6 @@
 package com.uitalo.desafiobackend.requestsystem.application.service.solicitation;
 
+import com.uitalo.desafiobackend.requestsystem.application.audit.Audited;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.solicitation.CreateSolicitationUseCase;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Solicitation;
 import com.uitalo.desafiobackend.requestsystem.domain.repository.SolicitationRepository;
@@ -22,6 +23,11 @@ public class CreateSolicitationService implements CreateSolicitationUseCase {
 
     @Override
     @Transactional
+    @Audited(
+            action = "SOLICITATION_CREATED",
+            resourceType = "Solicitation",
+            resourceIdFromResult = true
+    )
     public Solicitation create(UUID clientId) {
         Objects.requireNonNull(clientId, "O identificador do cliente é obrigatório.");
 

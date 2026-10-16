@@ -1,5 +1,6 @@
 package com.uitalo.desafiobackend.requestsystem.application.service.solicitation;
 
+import com.uitalo.desafiobackend.requestsystem.application.audit.Audited;
 import com.uitalo.desafiobackend.requestsystem.application.port.out.PostalCodeLookup;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.solicitation.LookupAddressUseCase;
 import com.uitalo.desafiobackend.requestsystem.application.usecase.solicitation.UpdateSolicitationAddressUseCase;
@@ -29,6 +30,11 @@ public class UpdateSolicitationAddressService
 
     @Override
     @Transactional
+    @Audited(
+            action = "SOLICITATION_ADDRESS_UPDATED",
+            resourceType = "Solicitation",
+            resourceIdParameter = 0
+    )
     public Solicitation update(
             UUID solicitationId,
             UUID clientId,
