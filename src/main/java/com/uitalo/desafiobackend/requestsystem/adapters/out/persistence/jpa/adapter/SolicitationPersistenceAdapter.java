@@ -2,6 +2,7 @@ package com.uitalo.desafiobackend.requestsystem.adapters.out.persistence.jpa.ada
 
 import com.uitalo.desafiobackend.requestsystem.adapters.out.persistence.jpa.entity.SolicitationJpaEntity;
 import com.uitalo.desafiobackend.requestsystem.adapters.out.persistence.jpa.repository.SolicitationJpaRepository;
+import com.uitalo.desafiobackend.requestsystem.application.port.out.SolicitationIndexingOutbox;
 import com.uitalo.desafiobackend.requestsystem.domain.model.Solicitation;
 import com.uitalo.desafiobackend.requestsystem.domain.repository.SolicitationRepository;
 import org.springframework.stereotype.Repository;
@@ -17,10 +18,14 @@ public class SolicitationPersistenceAdapter
 
     private final SolicitationJpaRepository jpaRepository;
 
+    private final SolicitationIndexingOutbox indexingOutbox;
+
     public SolicitationPersistenceAdapter(
-            SolicitationJpaRepository jpaRepository
+            SolicitationJpaRepository jpaRepository,
+            SolicitationIndexingOutbox indexingOutbox
     ) {
         this.jpaRepository = jpaRepository;
+        this.indexingOutbox = indexingOutbox;
     }
 
     @Override
@@ -46,6 +51,8 @@ public class SolicitationPersistenceAdapter
 
         SolicitationJpaEntity savedEntity =
                 jpaRepository.save(entity);
+
+        indexingOutbox.enqueue(solicitation.getId());
 
         return savedEntity.toDomain();
     }
